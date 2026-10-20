@@ -1,6 +1,6 @@
 # MDV
 
-Windows 11 ネイティブの**閲覧専用 Markdown ビューア**です。日本語UIで、GitHub風のレンダリングを行います。
+Windows 11 ネイティブの**閲覧専用 Markdown ビューア**です。英語・日本語・韓国語の UI に対応し、GitHub風のレンダリングを行います。
 
 ## 概要
 
@@ -10,9 +10,7 @@ MDV（Markdown Viewer）は、Markdown ファイルを開いて閲覧するこ�
 
 ### Microsoft Store（推奨）
 
-Microsoft Store で「**MDV - Markdown Viewer**」を検索してインストールできます。Store 版は Microsoft によって署名・配布されるため、**証明書の手動信頼は不要**で、更新も自動的に行われます。
-
-> 現在ストア審査中のため、公開後にストアの直接リンクをここへ掲載します。
+[Microsoft Store の MDV - Markdown Viewer](https://apps.microsoft.com/detail/9P45KBTKG49K) からインストールできます（Store で「**MDV - Markdown Viewer**」を検索しても見つかります）。Store 版は Microsoft によって署名・配布されるため、**証明書の手動信頼は不要**で、更新も自動的に行われます。
 
 ### GitHub Releases（自己署名版）
 
@@ -41,9 +39,11 @@ Microsoft Store への一本化に伴い、今後の新規配布は Store が中
 - LaTeX 数式（KaTeX によるレンダリング）
 - Mermaid 図
 - テーマ切替（ライト / ダーク / システム連動）
+- 表示言語の切り替え（英語 / 日本語 / 韓国語 / システム連動。[表示]→[言語]）。翻訳の無い言語の環境では英語で表示
 - 文字サイズの拡大・縮小・リセット
 - ステータスバー（左：文字エンコード、右：改行コード）
-- 設定の永続化（テーマ・文字サイズ・ステータスバー表示状態などを次回起動時に復元）
+- 設定の永続化（テーマ・表示言語・文字サイズ・ステータスバー表示状態などを次回起動時に復元）
+- バージョン情報（同梱しているサードパーティ製ソフトウェアのライセンスも表示）
 - 3 つの開き方
   - メニューからファイルを選択
   - ファイルのドラッグ＆ドロップ
@@ -75,6 +75,8 @@ dotnet run -c Debug
 
 `Microsoft.Windows.SDK.BuildTools.WinApp` がパッケージ ID を自動登録して起動するため、Visual Studio の MSIX パッケージ化ツールが無くても全機能（ファイル関連付け・設定の永続化を含む）が動作します。
 
+> Store 版をインストールしている PC では、同じパッケージ ID のため `dotnet run` が「already installed as a non-development-mode package」で失敗します。Store 版をアンインストールするか、`Package.appxmanifest` の `Publisher` を一時的に自分の証明書の Subject に変えて自己署名 MSIX を作り、別アプリとして入れて確認してください（変更はコミットしないこと）。
+
 ### Core 層のテスト
 
 ```powershell
@@ -97,6 +99,8 @@ msbuild src/MDV.App/MDV.App.csproj /restore `
 ```
 
 生成物: `src/MDV.App/AppPackages/MDV.App_<version>_x64_bundle.msixupload`
+
+> `MDV.App.csproj` の `AppxBundleAutoResourcePackageQualifiers`（`Scale|DXFeatureLevel`）は消さないでください。無いとバンドル作成時に言語リソースが言語別パッケージへ分割され、Store 版で既定言語以外の翻訳が表示されなくなります。
 
 > PowerShell で実行してください（Git Bash では `/p:` がパスとして誤変換されます）。
 
@@ -130,10 +134,15 @@ Windows 11 のみ
 1. ファイルが外部で更新されても自動再読み込みは行いません（手動の「再読み込み」操作が必要です）。
 2. テーマを動的に切り替えても、すでにレンダリング済みの Mermaid 図は再テーマされません（反映するには再読み込みが必要です）。
 3. 文字サイズの拡大・縮小は WebView2 の CSS zoom によって実装しています（WinUI 3 の WebView2 はネイティブの `ZoomFactor` が公開されていないため）。
+4. 表示言語の変更は、アプリの再起動後に反映されます。
 
 ## サンプル文書
 
 `docs/sample.md` に、表・コード・タスクリスト・数式・Mermaid 図・外部リンクを網羅した検証用サンプルがあります。
+
+## 翻訳への協力
+
+新しい言語の追加や翻訳の修正の手順は [docs/translations/README.md](docs/translations/README.md)（英語）を参照してください。コードやマニフェストを変更せずに言語を追加できます。
 
 ## ライセンス
 
