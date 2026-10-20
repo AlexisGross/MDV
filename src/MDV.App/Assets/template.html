@@ -12,6 +12,12 @@
   <style>
     body { margin: 0; }
     .markdown-body { box-sizing: border-box; max-width: 900px; margin: 0 auto; padding: 24px; }
+    /* 文書の背景色(github-markdown-css の本文色)をページ全体に広げ、900px の本文列の外側も同じ色にする。
+       ウィンドウ側も同じ色で塗る(MainWindow.ApplyWindowBackground)ため、ウィンドウと文書の境目が出ない。
+       theme-system は prefers-color-scheme で判定する(ホストが WebView2 の配色をアプリのテーマに合わせている)。 */
+    html.theme-light, html.theme-system { background-color: #ffffff; }
+    html.theme-dark { background-color: #0d1117; }
+    @media (prefers-color-scheme: dark) { html.theme-system { background-color: #0d1117; } }
     /* コードブロック右上の「コピー」ボタン（ホバーで表示） */
     .markdown-body pre { position: relative; }
     .md-copy-btn {
@@ -159,6 +165,8 @@
     });
     // コードブロック右上に「コピー」ボタンを追加する（Mermaid図は除外）。
     // クリップボードは確実性のためホスト(C#)経由でコピーする（postMessage 'copy:'）。
+    // ボタンの文言はホスト(C#)が表示言語の文字列(JS文字列リテラル)に置換する。
+    var __copyLabel = {{COPY_LABEL}}, __copiedLabel = {{COPIED_LABEL}};
     document.querySelectorAll('.markdown-body pre').forEach(function (pre) {
       if (pre.classList.contains('mermaid')) return;
       var code = pre.querySelector('code');
@@ -166,12 +174,12 @@
       var btn = document.createElement('button');
       btn.className = 'md-copy-btn';
       btn.type = 'button';
-      btn.textContent = 'コピー';
+      btn.textContent = __copyLabel;
       btn.addEventListener('click', function () {
         if (window.chrome && window.chrome.webview) {
           window.chrome.webview.postMessage('copy:' + code.innerText);
-          btn.textContent = 'コピーしました';
-          setTimeout(function () { btn.textContent = 'コピー'; }, 1200);
+          btn.textContent = __copiedLabel;
+          setTimeout(function () { btn.textContent = __copyLabel; }, 1200);
         }
       });
       pre.appendChild(btn);

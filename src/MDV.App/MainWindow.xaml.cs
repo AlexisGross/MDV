@@ -23,6 +23,7 @@ public sealed partial class MainWindow : Window
     private ThemeMode _currentTheme = ThemeMode.System;
     private string _template = "";
     private bool _webReady;
+    private CoreWebView2Environment? _webEnv;
     private AppSettings _settings = new();
     // WinUI3のWebView2 XAMLコントロールはCoreWebView2Controller/ZoomFactorを公開していないため、
     // CSS(zoom)経由でWebView2側に倍率を適用し、現在値はこのフィールドで保持する
@@ -37,7 +38,60 @@ public sealed partial class MainWindow : Window
 
         AppWindow.SetIcon("Assets/AppIcon.ico");
 
+        // WebView2初期化(LoadSettings)より前に閉じられても、保存済みの表示言語を消さないよう先に読み込む
+        try { _settings = SettingsService.Load(); } catch { _settings = new AppSettings(); }
+        BuildLanguageMenu();
+
+        // テーマ(「システムに合わせる」でのOS側の切替を含む)が変わるたびに、ウィンドウの背景を塗り直す
+        RootGrid.ActualThemeChanged += (s, e) => ApplyWindowBackground();
+        ApplyWindowBackground();
+
         this.Closed += (s, e) => PersistSettings();
+    }
+
+    // [表示]→[言語]: 「システムに合わせる」＋翻訳のある各言語(その言語自身の名称で表示)
+    private void BuildLanguageMenu()
+    {
+        LanguageMenu.Items.Clear();
+        var options = new List<(string Tag, string Label)> { ("", Localizer.Get("MenuLanguageSystem")) };
+        options.AddRange(Localizer.AvailableLanguages().Select(tag => (tag, Localizer.NativeName(tag))));
+        foreach (var (tag, label) in options)
+        {
+            var item = new RadioMenuFlyoutItem
+            {
+                Text = label,
+                GroupName = "Language",
+                IsChecked = string.Equals(tag, _settings.Language ?? "", StringComparison.OrdinalIgnoreCase)
+            };
+            item.Click += (s, e) => OnLanguageSelected(tag);
+            LanguageMenu.Items.Add(item);
+        }
+    }
+
+    // 表示言語を保存し、再起動を促す（メニュー等のUI文字列は起動時に読み込まれるため、反映には再起動が必要）
+    private async void OnLanguageSelected(string tag)
+    {
+        if (string.Equals(tag, _settings.Language ?? "", StringComparison.OrdinalIgnoreCase)) return;
+        _settings.Language = tag;
+        PersistSettings();
+        Localizer.ApplyLanguageOverride(tag);
+
+        var dialog = new ContentDialog
+        {
+            Title = Localizer.Get("LanguageRestartTitle"),
+            Content = Localizer.Get("LanguageRestartMessage"),
+            PrimaryButtonText = Localizer.Get("LanguageRestartNow"),
+            CloseButtonText = Localizer.Get("LanguageRestartLater"),
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = this.Content.XamlRoot,
+            RequestedTheme = (this.Content as FrameworkElement)?.RequestedTheme ?? ElementTheme.Default
+        };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+
+        PersistSettings();
+        // 開いていたファイルは再起動後にもう一度開く（App.OnLaunched がコマンドライン引数を読む）
+        var args = _currentPath != null ? $"\"{_currentPath}\"" : "";
+        Microsoft.Windows.AppLifecycle.AppInstance.Restart(args);
     }
 
     // WebView2を初回利用時に1回だけ初期化し、vendorフォルダを仮想ホストにマッピングする
@@ -46,9 +100,13 @@ public sealed partial class MainWindow : Window
         if (_webReady) return;
 
         EncodingDetector.RegisterProviders();
-        // WebView2の既定UI(右クリックメニュー等)を日本語にするため、言語を指定した環境で初期化する
+        // WebView2の既定UI(右クリックメニュー等)をアプリの表示言語に合わせるため、言語を指定した環境で初期化する
         var env = await CoreWebView2Environment.CreateWithOptionsAsync(null, null,
-            new CoreWebView2EnvironmentOptions { Language = "ja-JP" });
+            new CoreWebView2EnvironmentOptions { Language = Localizer.Get("WebViewLanguage") });
+        _webEnv = env;   // Aboutダイアログのライセンス表示でも同じ環境を使う
+        // WebView2自体の既定背景は透明にし、ページの読み込み前はウィンドウの背景(=文書の背景色)が見えるようにする。
+        // 初期化前に設定しないと、読み込み中に既定の白/黒が一瞬見えてしまう
+        ContentView.DefaultBackgroundColor = Microsoft.UI.Colors.Transparent;
         await ContentView.EnsureCoreWebView2Async(env);
 
         var assetsDir = Path.Combine(AppContext.BaseDirectory, "Assets");
@@ -57,24 +115,9 @@ public sealed partial class MainWindow : Window
             "vendor", Path.Combine(assetsDir, "vendor"),
             CoreWebView2HostResourceAccessKind.Allow);
 
-        _template = File.ReadAllText(Path.Combine(assetsDir, "template.html"));
+        _template = LocalizeTemplate(File.ReadAllText(Path.Combine(assetsDir, "template.html")));
 
-        // 外部リンク(http/https)はアプリ内WebView2で遷移させず、既定ブラウザで開く
-        ContentView.CoreWebView2.NewWindowRequested += (s, e) =>
-        {
-            e.Handled = true;
-            LaunchExternal(e.Uri);
-        };
-        ContentView.CoreWebView2.NavigationStarting += (s, e) =>
-        {
-            if (Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) &&
-                (uri.Scheme == "http" || uri.Scheme == "https") &&
-                uri.Host != "vendor")            // 同梱資産(http://vendor/...)の取得は遮らない
-            {
-                e.Cancel = true;
-                LaunchExternal(e.Uri);
-            }
-        };
+        OpenLinksExternally(ContentView.CoreWebView2);
 
         // 右クリックの既定メニューを閲覧向けに整理する（保存/検証などを除去し、コピー・印刷・再読み込みを残す）
         ContentView.CoreWebView2.ContextMenuRequested += OnContextMenuRequested;
@@ -87,6 +130,37 @@ public sealed partial class MainWindow : Window
         _webReady = true;
 
         LoadSettings();
+    }
+
+    // template.html 内のUI文字列プレースホルダ(コピーボタン)を表示言語の文字列に置き換える。
+    // JSの文字列リテラルとして埋め込むため、JSONエンコード(引用符・</script>等をエスケープ)して渡す。
+    // JsonSerializer はRelease構成(リフレクション無効)で例外になるため、JsonEncodedText を使う。
+    // 本文(Markdown)を埋め込む前のテンプレートに対して行うので、本文中の同じ文字列は置換されない。
+    private static string LocalizeTemplate(string template) => template
+        .Replace("{{COPY_LABEL}}", ToJsString(Localizer.Get("CopyButton")))
+        .Replace("{{COPIED_LABEL}}", ToJsString(Localizer.Get("CopyButtonDone")));
+
+    private static string ToJsString(string value) =>
+        "\"" + System.Text.Json.JsonEncodedText.Encode(value).ToString() + "\"";
+
+    // 外部リンク(http/https)はアプリ内WebView2で遷移させず、既定ブラウザで開く
+    private static void OpenLinksExternally(CoreWebView2 core)
+    {
+        core.NewWindowRequested += (s, e) =>
+        {
+            e.Handled = true;
+            LaunchExternal(e.Uri);
+        };
+        core.NavigationStarting += (s, e) =>
+        {
+            if (Uri.TryCreate(e.Uri, UriKind.Absolute, out var uri) &&
+                (uri.Scheme == "http" || uri.Scheme == "https") &&
+                uri.Host != "vendor")            // 同梱資産(http://vendor/...)の取得は遮らない
+            {
+                e.Cancel = true;
+                LaunchExternal(e.Uri);
+            }
+        };
     }
 
     // 外部URIを既定のブラウザ（既定アプリ）で開く
@@ -121,7 +195,7 @@ public sealed partial class MainWindow : Window
                     "", null, CoreWebView2ContextMenuItemKind.Separator));
 
             var reload = sender.Environment.CreateContextMenuItem(
-                "再読み込み", null, CoreWebView2ContextMenuItemKind.Command);
+                Localizer.Get("ContextMenuReload"), null, CoreWebView2ContextMenuItemKind.Command);
             reload.CustomItemSelected += (s2, a2) =>
                 DispatcherQueue.TryEnqueue(async () =>
                 {
@@ -218,7 +292,10 @@ public sealed partial class MainWindow : Window
             ApplyZoom(_zoomFactor);
 
             EncodingText.Text = doc.EncodingDisplay;
-            LineEndingText.Text = LineEndingDetector.ToDisplay(doc.LineEnding);
+            // 「混在」だけは言語依存の語のため、表示言語の文字列に差し替える（CRLF/LF/CRは共通表記）
+            LineEndingText.Text = doc.LineEnding == LineEndingKind.Mixed
+                ? Localizer.Get("LineEndingMixed")
+                : LineEndingDetector.ToDisplay(doc.LineEnding);
             // ウィンドウ名(タスクバー)と可視タイトルバーの両方を更新する
             var title = $"MDV — {Path.GetFileName(path)}";
             this.Title = title;
@@ -243,11 +320,11 @@ public sealed partial class MainWindow : Window
     {
         var dialog = new ContentDialog
         {
-            Title = "ファイルを開けません",
+            Title = Localizer.Get("OpenErrorTitle"),
             Content = ex is FileNotFoundException
-                ? "指定されたファイルが見つかりませんでした。"
-                : $"ファイルの読み込み中にエラーが発生しました。\n{ex.Message}",
-            CloseButtonText = "閉じる",
+                ? Localizer.Get("OpenErrorNotFound")
+                : $"{Localizer.Get("OpenErrorGeneric")}\n{ex.Message}",
+            CloseButtonText = Localizer.Get("DialogClose"),
             XamlRoot = this.Content.XamlRoot
         };
         await dialog.ShowAsync();
@@ -258,9 +335,9 @@ public sealed partial class MainWindow : Window
     {
         var dialog = new ContentDialog
         {
-            Title = "このアプリについて",
+            Title = Localizer.Get("AboutTitle"),
             Content = BuildAboutContent(),
-            CloseButtonText = "閉じる",
+            CloseButtonText = Localizer.Get("DialogClose"),
             XamlRoot = this.Content.XamlRoot,
             // ダイアログをウィンドウの現在テーマに合わせる（ライト/ダーク両対応）
             RequestedTheme = (this.Content as FrameworkElement)?.RequestedTheme ?? ElementTheme.Default
@@ -268,8 +345,8 @@ public sealed partial class MainWindow : Window
         await dialog.ShowAsync();
     }
 
-    // Aboutダイアログの中身を組み立てる（アプリ名・版・著作権・MIT・サードパーティ一覧）
-    private static FrameworkElement BuildAboutContent()
+    // Aboutダイアログの中身を組み立てる（アプリ名・版・著作権・MIT・サードパーティ一覧・コントリビューター）
+    private FrameworkElement BuildAboutContent()
     {
         // アプリ名・バージョンをパッケージ情報から動的取得（非パッケージ実行時はアセンブリ情報へフォールバック）
         string appName = "MDV";
@@ -288,70 +365,69 @@ public sealed partial class MainWindow : Window
         }
 
         // サードパーティ表記を Assets から読み込む（ビルド時にコピー済み。無ければメッセージを出す）
-        string notices;
+        string? notices;
         try
         {
             notices = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Assets", "THIRD-PARTY-NOTICES.md"));
         }
         catch
         {
-            notices = "サードパーティ ライセンス情報を読み込めませんでした。";
+            notices = null;
         }
 
         var panel = new StackPanel { Spacing = 6 };
 
         panel.Children.Add(new TextBlock
         {
-            Text = $"{appName}  バージョン {version}",
+            Text = string.Format(Localizer.Get("AboutVersion"), appName, version),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             FontSize = 18
         });
         panel.Children.Add(new TextBlock
         {
-            Text = "Windows 11 ネイティブの閲覧専用 Markdown ビューア",
+            Text = Localizer.Get("AboutDescription"),
             TextWrapping = TextWrapping.Wrap,
             Opacity = 0.8
         });
         panel.Children.Add(new TextBlock { Text = "Copyright (c) 2026 kajiyajp", TextWrapping = TextWrapping.Wrap });
         panel.Children.Add(new TextBlock
         {
-            Text = "本ソフトウェアは MIT License の下で公開されています。",
+            Text = Localizer.Get("AboutLicense"),
             TextWrapping = TextWrapping.Wrap
         });
 
         // GitHubリンク（クリックで既定ブラウザが開く。オフラインでも下のライセンス本文は読める）。
         // 注: WinUI3デスクトップでは HyperlinkButton.NavigateUri が自動でブラウザを開かないため、
         //     アプリ本体と同じ Launcher.LaunchUriAsync 経由(LaunchExternal)で明示的に開く。
-        var githubLink = new HyperlinkButton { Content = "GitHub リポジトリを開く", Padding = new Thickness(0) };
+        var githubLink = new HyperlinkButton { Content = Localizer.Get("AboutGitHubLink"), Padding = new Thickness(0) };
         githubLink.Click += (s, e) => LaunchExternal("https://github.com/kajiyajp/MDV");
         panel.Children.Add(githubLink);
 
         panel.Children.Add(new TextBlock
         {
-            Text = "サードパーティ ライセンス",
+            Text = Localizer.Get("AboutThirdPartyHeader"),
             FontWeight = Microsoft.UI.Text.FontWeights.SemiBold,
             FontSize = 15,
             Margin = new Thickness(0, 6, 0, 0)
         });
 
-        // 通知本文は等幅フォントで表示。テーブルの整列を保つため折り返さず「横スクロールのみ」。
-        // 縦スクロールは外側のScrollViewerに委ねる（内側の縦スクロールを無効化しネスト縦スクロールを回避）。
-        var noticesText = new TextBlock
+        // 通知本文(Markdown)は本文と同じレンダラ・スタイルでWebView2に表示する（表・リンクを整形して見せる）。
+        // 読み込めなかった場合はメッセージのみ表示する。
+        FrameworkElement noticesContent;
+        if (notices != null)
         {
-            Text = notices,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
-            FontSize = 12,
-            TextWrapping = TextWrapping.NoWrap,
-            IsTextSelectionEnabled = true
-        };
-        var noticesScroll = new ScrollViewer
+            var noticesView = new WebView2
+            {
+                Height = 260,
+                DefaultBackgroundColor = Microsoft.UI.Colors.Transparent
+            };
+            noticesView.Loaded += async (s, e) => await ShowNoticesAsync(noticesView, notices);
+            noticesContent = noticesView;
+        }
+        else
         {
-            Content = noticesText,
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollMode = ScrollMode.Auto,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Disabled,
-            VerticalScrollMode = ScrollMode.Disabled
-        };
+            noticesContent = new TextBlock { Text = Localizer.Get("AboutThirdPartyLoadError"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(8) };
+        }
         // 枠線はテーマリソースを用い、両テーマで視認できるようにする（未定義時は灰色にフォールバック）
         Microsoft.UI.Xaml.Media.Brush strokeBrush =
             Application.Current.Resources.TryGetValue("CardStrokeColorDefaultBrush", out var b) && b is Microsoft.UI.Xaml.Media.Brush br
@@ -359,12 +435,20 @@ public sealed partial class MainWindow : Window
                 : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Gray);
         panel.Children.Add(new Border
         {
-            Child = noticesScroll,
+            Child = noticesContent,
             BorderBrush = strokeBrush,
             BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Padding = new Thickness(8)
+            CornerRadius = new CornerRadius(4)
         });
+
+        // コントリビューター（最下部に小さく表示）
+        var credit = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Thickness(0, 6, 0, 0), Opacity = 0.75 };
+        credit.Children.Add(new TextBlock { Text = Localizer.Get("AboutContributors") + ":", FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+        var coldlapseLink = new HyperlinkButton { Content = "Coldlapse", FontSize = 12, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
+        coldlapseLink.Click += (s, e) => LaunchExternal("https://github.com/Coldlapse");
+        credit.Children.Add(coldlapseLink);
+        credit.Children.Add(new TextBlock { Text = "— " + Localizer.Get("AboutCreditTranslationEnKo"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+        panel.Children.Add(credit);
 
         // ダイアログ全体を縦スクロール可能にし、画面が小さくても内容が溢れず
         // 「閉じる」ボタンが隠れないようにする（高さ・幅を上限で制約）。
@@ -376,6 +460,43 @@ public sealed partial class MainWindow : Window
             MaxHeight = 460,
             MaxWidth = 560
         };
+    }
+
+    // Aboutダイアログ内のWebView2にサードパーティ表記(Markdown)を描画する
+    private async Task ShowNoticesAsync(WebView2 view, string markdown)
+    {
+        try
+        {
+            await EnsureWebViewAsync();   // 環境(_webEnv)とテンプレートを用意する
+            await view.EnsureCoreWebView2Async(_webEnv);
+            var core = view.CoreWebView2;
+            core.SetVirtualHostNameToFolderMapping(
+                "vendor", Path.Combine(AppContext.BaseDirectory, "Assets", "vendor"),
+                CoreWebView2HostResourceAccessKind.Allow);
+            OpenLinksExternally(core);
+            // 閲覧専用の小さな表示のため、右クリックメニューとブラウザ既定のショートカットは使わない（Ctrl+C は有効）
+            core.Settings.AreDefaultContextMenusEnabled = false;
+            core.Settings.AreBrowserAcceleratorKeysEnabled = false;
+
+            // 狭いダイアログ内なので、本文より文字を小さく・余白を狭くする
+            core.NavigationCompleted += async (s, e) =>
+            {
+                try
+                {
+                    await core.ExecuteScriptAsync(
+                        "window.__setZoom && window.__setZoom('0.8');" +
+                        "document.querySelector('.markdown-body').style.padding = '8px 12px';");
+                }
+                catch { /* 見た目のみの調整のため失敗は無視 */ }
+            };
+
+            var baseUri = new Uri(Path.Combine(AppContext.BaseDirectory, "Assets") + Path.DirectorySeparatorChar).AbsoluteUri;
+            view.NavigateToString(MarkdownRenderer.BuildHtml(markdown, _currentTheme, _template, baseUri));
+        }
+        catch
+        {
+            // WebView2が利用できない場合は枠が空になるだけで、ダイアログの他の情報は読める
+        }
     }
 
     // [ファイル]→[開く]: ファイルピッカーでMarkdownファイルを選択して開く
@@ -412,15 +533,35 @@ public sealed partial class MainWindow : Window
     private void OnExitClick(object s, RoutedEventArgs e) { PersistSettings(); Application.Current.Exit(); }
 
     // テーマを切り替え、ウィンドウ・トグルアイコン・WebView2本文へ反映する
+    // ウィンドウ(タイトルバー・メニューバーを含む)の背景を、文書の背景色(github-markdown-css の本文色)に合わせる。
+    // template.html でもページ全体を同じ色にしているため、ウィンドウと文書の境目が出ない
+    private void ApplyWindowBackground()
+    {
+        var dark = RootGrid.ActualTheme == ElementTheme.Dark;
+        RootGrid.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(dark
+            ? Windows.UI.Color.FromArgb(0xFF, 0x0D, 0x11, 0x17)    // github-markdown-dark の本文背景
+            : Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF));  // github-markdown-light の本文背景
+    }
+
     private async void SetTheme(ThemeMode mode)
     {
         _currentTheme = mode;
         ThemeService.ApplyToWindow(this, mode);
+        ApplyWindowBackground();
         ThemeToggle.Content = ThemeService.ToggleIcon(mode);
         // WebView2側のCSSも切替
         if (_webReady)
             try
             {
+                // WebView2自体の配色(スクロールバー・prefers-color-scheme)もアプリのテーマに合わせる。
+                // 未設定だとOSの配色のままになり、例えばOSがダークでアプリがライトのとき
+                // 本文だけライト・スクロールバー等はダークという不一致が起きる
+                ContentView.CoreWebView2.Profile.PreferredColorScheme = mode switch
+                {
+                    ThemeMode.Light => CoreWebView2PreferredColorScheme.Light,
+                    ThemeMode.Dark => CoreWebView2PreferredColorScheme.Dark,
+                    _ => CoreWebView2PreferredColorScheme.Auto
+                };
                 await ContentView.CoreWebView2.ExecuteScriptAsync(
                     $"window.__setTheme && window.__setTheme('{ThemeService.ToCssClass(mode)}')");
             }
