@@ -27,6 +27,9 @@ public class FileServiceTests
         EncodingDetector.RegisterProviders();
         var path = Path.GetTempFileName();
         File.WriteAllBytes(path, Encoding.GetEncoding(932).GetBytes("日本語\n"));
+        // UTF-8 でないファイルの読み方は利用者の地域で変わるため、実行環境に依らないよう日本語の地域に固定する
+        var culture = System.Globalization.CultureInfo.CurrentCulture;
+        System.Globalization.CultureInfo.CurrentCulture = new System.Globalization.CultureInfo("ja-JP");
         try
         {
             var r = FileService.Load(path);
@@ -34,7 +37,11 @@ public class FileServiceTests
             Assert.Equal(LineEndingKind.Lf, r.LineEnding);
             Assert.Contains("日本語", r.Text);
         }
-        finally { File.Delete(path); }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = culture;
+            File.Delete(path);
+        }
     }
 
     [Fact]
