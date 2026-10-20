@@ -541,6 +541,26 @@ public sealed partial class MainWindow : Window
         RootGrid.Background = new Microsoft.UI.Xaml.Media.SolidColorBrush(dark
             ? Windows.UI.Color.FromArgb(0xFF, 0x0D, 0x11, 0x17)    // github-markdown-dark の本文背景
             : Windows.UI.Color.FromArgb(0xFF, 0xFF, 0xFF, 0xFF));  // github-markdown-light の本文背景
+        ApplyCaptionButtonColors(dark);
+    }
+
+    // キャプションボタン(最小化・最大化・閉じる)の色をアプリのテーマに合わせる(Issue #9)。
+    // 明示しないと OS 側の配色が残ることがあり、OSがダーク・アプリがライトのとき白い記号が白背景に溶けて見えなくなる
+    private void ApplyCaptionButtonColors(bool dark)
+    {
+        var tb = AppWindow.TitleBar;
+        var fg = dark ? Microsoft.UI.Colors.White : Microsoft.UI.Colors.Black;
+        tb.ButtonBackgroundColor = Microsoft.UI.Colors.Transparent;
+        tb.ButtonInactiveBackgroundColor = Microsoft.UI.Colors.Transparent;
+        tb.ButtonForegroundColor = fg;
+        tb.ButtonHoverForegroundColor = fg;
+        tb.ButtonPressedForegroundColor = fg;
+        tb.ButtonInactiveForegroundColor = dark
+            ? Windows.UI.Color.FromArgb(0xFF, 0x80, 0x80, 0x80)
+            : Windows.UI.Color.FromArgb(0xFF, 0x9E, 0x9E, 0x9E);
+        // ホバー・押下時の背景は、前景色を薄く重ねた色にする
+        tb.ButtonHoverBackgroundColor = Windows.UI.Color.FromArgb(0x18, fg.R, fg.G, fg.B);
+        tb.ButtonPressedBackgroundColor = Windows.UI.Color.FromArgb(0x10, fg.R, fg.G, fg.B);
     }
 
     private async void SetTheme(ThemeMode mode)
