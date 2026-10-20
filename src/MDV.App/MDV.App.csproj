@@ -20,6 +20,12 @@
     <Nullable>enable</Nullable>
     <!-- UI文字列(Strings/<言語>/Resources.resw)の既定言語。翻訳の無い言語の環境ではこの言語で表示する -->
     <DefaultLanguage>ja-JP</DefaultLanguage>
+    <!--
+      バンドル(.msixbundle/.msixupload)作成時に言語別リソースパッケージへ分割しない。
+      分割すると resources.pri に既定言語(ja-JP)しか残らず、分割先の言語リソースもバンドルに入らないため、
+      インストール後に英語・韓国語を選んでも日本語のまま表示される。全言語をメインパッケージに含める。
+    -->
+    <AppxBundleAutoResourcePackageQualifiers>Scale|DXFeatureLevel</AppxBundleAutoResourcePackageQualifiers>
   </PropertyGroup>
 
   <ItemGroup>
