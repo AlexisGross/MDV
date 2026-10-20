@@ -74,7 +74,7 @@ public sealed partial class MainWindow : Window
         if (string.Equals(tag, _settings.Language ?? "", StringComparison.OrdinalIgnoreCase)) return;
         _settings.Language = tag;
         PersistSettings();
-        Localizer.ApplyLanguageOverride(tag);
+        Localizer.SetLanguage(tag);
 
         var dialog = new ContentDialog
         {
