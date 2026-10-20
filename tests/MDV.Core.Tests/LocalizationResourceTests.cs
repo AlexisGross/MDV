@@ -4,7 +4,8 @@ using System.Xml.Linq;
 namespace MDV.Core.Tests;
 
 /// <summary>
-/// 各言語の Resources.resw と翻訳テンプレートが、既定言語(ja-JP)と同じキー・プレースホルダを持つことを検査する。
+/// 各言語の Resources.resw と翻訳テンプレートが、基準とする ja-JP(キーの追加元)と同じキー・プレースホルダを持つことを検査する。
+/// ※実行時の既定言語(翻訳が無い環境での表示言語)は en-US。ここでの ja-JP は検査の基準であり既定言語ではない。
 /// キーの追加漏れ・綴り違いは実行時に「キー名がそのまま表示される」だけで気付きにくいため、テストで防ぐ。
 /// </summary>
 public class LocalizationResourceTests

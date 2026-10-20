@@ -6,7 +6,7 @@ namespace MDV.App.Services;
 /// <summary>
 /// コードから使うUI文字列を Strings/&lt;言語&gt;/Resources.resw から取得する。
 /// 言語は [表示]→[言語] の指定、未指定ならWindowsの表示言語で決まり、
-/// 該当する翻訳が無ければ既定言語(ja-JP)になる。
+/// 該当する翻訳が無ければ既定言語(en-US)になる。
 /// XAML側の文字列は x:Uid で同じリソースから読み込まれる。
 /// </summary>
 public static partial class Localizer

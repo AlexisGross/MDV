@@ -1,13 +1,13 @@
 # Translating MDV
 
 MDV uses the language chosen in **View → Language**. With **Use system setting** (the default) it follows
-the Windows display language, and falls back to Japanese if there is no translation for it.
+the Windows display language, and falls back to English if there is no translation for it.
 
 | Language | File |
 |---|---|
-| Japanese (default) | [`src/MDV.App/Strings/ja-JP/Resources.resw`](../../src/MDV.App/Strings/ja-JP/Resources.resw) |
+| Japanese (reference for keys) | [`src/MDV.App/Strings/ja-JP/Resources.resw`](../../src/MDV.App/Strings/ja-JP/Resources.resw) |
 | Korean | [`src/MDV.App/Strings/ko-KR/Resources.resw`](../../src/MDV.App/Strings/ko-KR/Resources.resw) |
-| English | [`src/MDV.App/Strings/en-US/Resources.resw`](../../src/MDV.App/Strings/en-US/Resources.resw) |
+| English (default) | [`src/MDV.App/Strings/en-US/Resources.resw`](../../src/MDV.App/Strings/en-US/Resources.resw) |
 
 ## Adding a language
 
@@ -28,7 +28,7 @@ To try a translation, choose it in **View → Language** and restart the app.
 
 ## Adding or changing a UI string (for developers)
 
-1. Add the key to `Strings/ja-JP/Resources.resw` (the default language).
+1. Add the key to `Strings/ja-JP/Resources.resw` (the reference file the tests compare every language against).
 2. Add the same key to `docs/translations/Resources.template.resw` with an English reference value and a
    `<comment>` that explains the context and gives the Japanese original.
 3. Add the key to every other `Strings/*/Resources.resw`. If you cannot translate it, copy the English
