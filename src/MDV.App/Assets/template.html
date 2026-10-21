@@ -58,6 +58,11 @@
       document.getElementById('hl-light').disabled = dark;
     }
     applyTheme();
+    // 「システムに合わせる」のとき、表示中にOSのテーマが変わっても本文の配色を追従させる
+    // (ウィンドウ側の背景は MainWindow が ActualThemeChanged で追従する)
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      if (document.documentElement.classList.contains('theme-system')) applyTheme();
+    });
     // コード色付け
     // ※各ベンダーライブラリの利用は存在確認+try/catchで囲み、
     //   1つの失敗が後続の処理(ショートカット・コピーボタン等)を道連れにしないようにする

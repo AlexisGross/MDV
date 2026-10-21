@@ -74,7 +74,7 @@ public sealed partial class MainWindow : Window
         if (string.Equals(tag, _settings.Language ?? "", StringComparison.OrdinalIgnoreCase)) return;
         _settings.Language = tag;
         PersistSettings();
-        Localizer.ApplyLanguageOverride(tag);
+        Localizer.SetLanguage(tag);
 
         var dialog = new ContentDialog
         {
@@ -313,6 +313,25 @@ public sealed partial class MainWindow : Window
         await EnsureWebViewAsync();
         if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
             await OpenFileAsync(path!);
+        else
+            ShowEmptyDocument();
+    }
+
+    // ファイルを開いていないときも空の文書ページを表示する。
+    // 何も表示しないとWebView2既定の灰色(ダーク#202020/ライト#F3F3F3)が見え、ウィンドウの背景色と揃わないため。
+    // (ページ内のショートカット Ctrl+O 等もこのページで有効になる)
+    private void ShowEmptyDocument()
+    {
+        try
+        {
+            var baseUri = new Uri(Path.Combine(AppContext.BaseDirectory, "Assets") + Path.DirectorySeparatorChar).AbsoluteUri;
+            ContentView.CoreWebView2.NavigateToString(MarkdownRenderer.BuildHtml("", _currentTheme, _template, baseUri));
+            ApplyZoom(_zoomFactor);
+        }
+        catch
+        {
+            // WebView2が利用できない場合は既定の表示のまま
+        }
     }
 
     // ファイル読み込みエラーをダイアログで通知する
