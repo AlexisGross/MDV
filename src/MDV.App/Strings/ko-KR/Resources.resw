@@ -124,6 +124,12 @@
   <data name="OpenErrorGeneric" xml:space="preserve">
     <value>파일을 읽는 중 오류가 발생했습니다.</value>
   </data>
+  <data name="ViewerInitErrorTitle" xml:space="preserve">
+    <value>뷰어를 준비할 수 없음</value>
+  </data>
+  <data name="ViewerInitErrorMessage" xml:space="preserve">
+    <value>문서 표시 영역(WebView2)을 준비하는 중 오류가 발생했습니다.</value>
+  </data>
 
   <data name="AboutTitle" xml:space="preserve">
     <value>이 앱 정보</value>
@@ -139,6 +145,9 @@
   </data>
   <data name="AboutGitHubLink" xml:space="preserve">
     <value>GitHub 저장소 열기</value>
+  </data>
+  <data name="AboutOpenLogFolder" xml:space="preserve">
+    <value>로그 폴더 열기</value>
   </data>
   <data name="AboutThirdPartyHeader" xml:space="preserve">
     <value>타사 라이선스</value>

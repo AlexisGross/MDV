@@ -277,11 +277,12 @@ public sealed partial class MainWindow : Window
     }
 
     // ファイルを読み込み、MarkdownをHTMLに変換してWebView2に表示し、ステータスバーを更新する
+    // WebView2の初期化を含め、ここで起きた例外はダイアログで知らせてログに残す(アプリを落とさない)
     public async Task OpenFileAsync(string path)
     {
-        await EnsureWebViewAsync();
         try
         {
+            await EnsureWebViewAsync();
             var doc = FileService.Load(path);
             _currentPath = path;
 
@@ -303,18 +304,28 @@ public sealed partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            await ShowErrorAsync(ex);
+            await ShowErrorAsync(ex, "OpenFile");
         }
     }
 
     // 起動時パス（コマンドライン引数/ファイル関連付け）を受け取り、指定があれば開く
     public async Task OpenInitialAsync(string? path)
     {
-        await EnsureWebViewAsync();
         if (!string.IsNullOrWhiteSpace(path) && File.Exists(path))
-            await OpenFileAsync(path!);
-        else
+        {
+            await OpenFileAsync(path!);   // 例外は OpenFileAsync 内で処理される
+            return;
+        }
+        try
+        {
+            await EnsureWebViewAsync();
             ShowEmptyDocument();
+        }
+        catch (Exception ex)
+        {
+            // ファイルを指定しない起動でWebView2を初期化できなかったとき
+            await ShowErrorAsync(ex, "OpenInitial", "ViewerInitErrorTitle", "ViewerInitErrorMessage");
+        }
     }
 
     // ファイルを開いていないときも空の文書ページを表示する。
@@ -334,19 +345,31 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // ファイル読み込みエラーをダイアログで通知する
-    private async Task ShowErrorAsync(Exception ex)
+    // ファイルを開く系のエラーを端末内ログに記録し、ダイアログで通知する
+    private async Task ShowErrorAsync(Exception ex, string source,
+        string titleKey = "OpenErrorTitle", string messageKey = "OpenErrorGeneric")
     {
-        var dialog = new ContentDialog
+        CrashReporter.Record(ex, source);
+        try
         {
-            Title = Localizer.Get("OpenErrorTitle"),
-            Content = ex is FileNotFoundException
-                ? Localizer.Get("OpenErrorNotFound")
-                : $"{Localizer.Get("OpenErrorGeneric")}\n{ex.Message}",
-            CloseButtonText = Localizer.Get("DialogClose"),
-            XamlRoot = this.Content.XamlRoot
-        };
-        await dialog.ShowAsync();
+            var dialog = new ContentDialog
+            {
+                Title = Localizer.Get(titleKey),
+                Content = ex is FileNotFoundException
+                    ? Localizer.Get("OpenErrorNotFound")
+                    : $"{Localizer.Get(messageKey)}\n{ex.Message}",
+                CloseButtonText = Localizer.Get("DialogClose"),
+                XamlRoot = this.Content.XamlRoot,
+                // Windowsのテーマではなくアプリのテーマに合わせる(Issue #16 の2。About・言語のダイアログと同じ)
+                RequestedTheme = (this.Content as FrameworkElement)?.RequestedTheme ?? ElementTheme.Default
+            };
+            await dialog.ShowAsync();
+        }
+        catch (Exception dialogEx)
+        {
+            // 別のダイアログを表示中などでダイアログを出せないときは、記録だけ残す
+            CrashReporter.Record(dialogEx, source + ".ShowError");
+        }
     }
 
     // [ヘルプ]→[このアプリについて]: アプリ情報とサードパーティライセンスをダイアログ表示する
@@ -421,6 +444,11 @@ public sealed partial class MainWindow : Window
         var githubLink = new HyperlinkButton { Content = Localizer.Get("AboutGitHubLink"), Padding = new Thickness(0) };
         githubLink.Click += (s, e) => LaunchExternal("https://github.com/kajiyajp/MDV");
         panel.Children.Add(githubLink);
+
+        // 端末内のエラー記録(送信はしない)を利用者が確認できるよう、ログフォルダを開くリンクを置く
+        var logLink = new HyperlinkButton { Content = Localizer.Get("AboutOpenLogFolder"), Padding = new Thickness(0) };
+        logLink.Click += async (s, e) => await CrashReporter.OpenLogFolderAsync();
+        panel.Children.Add(logLink);
 
         panel.Children.Add(new TextBlock
         {
@@ -521,15 +549,24 @@ public sealed partial class MainWindow : Window
     // [ファイル]→[開く]: ファイルピッカーでMarkdownファイルを選択して開く
     private async void OnOpenClick(object s, RoutedEventArgs e)
     {
-        var picker = new Windows.Storage.Pickers.FileOpenPicker();
-        // WinUI3ではHWND初期化が必要
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
-        foreach (var ext in new[] { ".md", ".markdown", ".mdown", ".mkd" })
-            picker.FileTypeFilter.Add(ext);
+        StorageFile? file;
+        try
+        {
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            // WinUI3ではHWND初期化が必要
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+            foreach (var ext in new[] { ".md", ".markdown", ".mdown", ".mkd" })
+                picker.FileTypeFilter.Add(ext);
 
-        var file = await picker.PickSingleFileAsync();
-        if (file != null) await OpenFileAsync(file.Path);
+            file = await picker.PickSingleFileAsync();
+        }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync(ex, "OpenPicker");
+            return;
+        }
+        if (file != null) await OpenFileAsync(file.Path);   // 例外は OpenFileAsync 内で処理される
     }
 
     // ルートGridへのドラッグ中: コピー操作を許可する
@@ -541,12 +578,19 @@ public sealed partial class MainWindow : Window
     // ルートGridへのドロップ: 最初のファイルを開く
     private async void OnDrop(object s, DragEventArgs e)
     {
-        if (e.DataView.Contains(StandardDataFormats.StorageItems))
+        StorageFile? file;
+        try
         {
+            if (!e.DataView.Contains(StandardDataFormats.StorageItems)) return;
             var items = await e.DataView.GetStorageItemsAsync();
-            var file = items.OfType<StorageFile>().FirstOrDefault();
-            if (file != null) await OpenFileAsync(file.Path);
+            file = items.OfType<StorageFile>().FirstOrDefault();
         }
+        catch (Exception ex)
+        {
+            await ShowErrorAsync(ex, "Drop");
+            return;
+        }
+        if (file != null) await OpenFileAsync(file.Path);   // 例外は OpenFileAsync 内で処理される
     }
 
     private void OnExitClick(object s, RoutedEventArgs e) { PersistSettings(); Application.Current.Exit(); }
@@ -646,7 +690,7 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    // [表示]→[再読み込み]: 現在開いているファイルを再読込する
+    // [表示]→[再読み込み]: 現在開いているファイルを再読込する(例外は OpenFileAsync 内で処理される)
     private async void OnReload(object s, RoutedEventArgs e)
     {
         if (_currentPath != null) await OpenFileAsync(_currentPath);

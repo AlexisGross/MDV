@@ -124,6 +124,12 @@
   <data name="OpenErrorGeneric" xml:space="preserve">
     <value>An error occurred while reading the file.</value>
   </data>
+  <data name="ViewerInitErrorTitle" xml:space="preserve">
+    <value>Cannot prepare the viewer</value>
+  </data>
+  <data name="ViewerInitErrorMessage" xml:space="preserve">
+    <value>An error occurred while preparing the document view (WebView2).</value>
+  </data>
 
   <data name="AboutTitle" xml:space="preserve">
     <value>About this app</value>
@@ -139,6 +145,9 @@
   </data>
   <data name="AboutGitHubLink" xml:space="preserve">
     <value>Open the GitHub repository</value>
+  </data>
+  <data name="AboutOpenLogFolder" xml:space="preserve">
+    <value>Open the log folder</value>
   </data>
   <data name="AboutThirdPartyHeader" xml:space="preserve">
     <value>Third-party licenses</value>
