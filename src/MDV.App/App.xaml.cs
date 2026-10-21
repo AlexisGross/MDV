@@ -34,6 +34,8 @@ public partial class App : Application
     /// </summary>
     public App()
     {
+        // 未処理の例外を端末内のログに記録する(起動処理中の例外も拾えるよう最初に登録する)
+        MDV.App.Services.CrashReporter.Install(this);
         InitializeComponent();
     }
 

@@ -136,6 +136,14 @@
     <value>ファイルの読み込み中にエラーが発生しました。</value>
   </data>
 
+  <!-- ファイルを指定しない起動で、表示部(WebView2)を準備できなかったときのダイアログ -->
+  <data name="ViewerInitErrorTitle" xml:space="preserve">
+    <value>表示を準備できません</value>
+  </data>
+  <data name="ViewerInitErrorMessage" xml:space="preserve">
+    <value>文書の表示部(WebView2)の準備中にエラーが発生しました。</value>
+  </data>
+
   <!-- 「このアプリについて」ダイアログ -->
   <data name="AboutTitle" xml:space="preserve">
     <value>このアプリについて</value>
@@ -151,6 +159,9 @@
   </data>
   <data name="AboutGitHubLink" xml:space="preserve">
     <value>GitHub リポジトリを開く</value>
+  </data>
+  <data name="AboutOpenLogFolder" xml:space="preserve">
+    <value>ログフォルダを開く</value>
   </data>
   <data name="AboutThirdPartyHeader" xml:space="preserve">
     <value>サードパーティ ライセンス</value>
