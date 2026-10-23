@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="WebViewLanguage" xml:space="preserve">
+    <value>es-AR</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Visor de Markdown</value>
+  </data>
+  <data name="FileTypeDisplayName" xml:space="preserve">
+    <value>Documento Markdown</value>
+  </data>
+  <data name="MenuFile.Title" xml:space="preserve">
+    <value>Archivo</value>
+  </data>
+  <data name="MenuOpen.Text" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="MenuPrint.Text" xml:space="preserve">
+    <value>Imprimir</value>
+  </data>
+  <data name="MenuExit.Text" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="MenuView.Title" xml:space="preserve">
+    <value>Ver</value>
+  </data>
+  <data name="MenuTheme.Text" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="MenuThemeLight.Text" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="MenuThemeDark.Text" xml:space="preserve">
+    <value>Oscuro</value>
+  </data>
+  <data name="MenuThemeSystem.Text" xml:space="preserve">
+    <value>Usar la configuración del sistema</value>
+  </data>
+  <data name="MenuZoomIn.Text" xml:space="preserve">
+    <value>Texto más grande</value>
+  </data>
+  <data name="MenuZoomOut.Text" xml:space="preserve">
+    <value>Texto más chico</value>
+  </data>
+  <data name="MenuZoomReset.Text" xml:space="preserve">
+    <value>Reestablecer tamaño del texto</value>
+  </data>
+  <data name="MenuReload.Text" xml:space="preserve">
+    <value>Recargar</value>
+  </data>
+  <data name="MenuToggleStatusBar.Text" xml:space="preserve">
+    <value>Mostrar/ocultar la barra de estado</value>
+  </data>
+  <data name="MenuHelp.Title" xml:space="preserve">
+    <value>Ayuda</value>
+  </data>
+  <data name="MenuAbout.Text" xml:space="preserve">
+    <value>Acerca de esta aplicación</value>
+  </data>
+  <data name="MenuLanguage.Text" xml:space="preserve">
+    <value>Lenguaje</value>
+  </data>
+  <data name="MenuLanguageSystem" xml:space="preserve">
+    <value>Usar la configuración del sistema</value>
+  </data>
+  <data name="LanguageRestartTitle" xml:space="preserve">
+    <value>Cambiar lenguaje</value>
+  </data>
+  <data name="LanguageRestartMessage" xml:space="preserve">
+    <value>El cambio surtirá efecto una vez que se reinicie la aplicación.</value>
+  </data>
+  <data name="LanguageRestartNow" xml:space="preserve">
+    <value>Reiniciar ahora</value>
+  </data>
+  <data name="LanguageRestartLater" xml:space="preserve">
+    <value>Más tarde</value>
+  </data>
+  <data name="ContextMenuReload" xml:space="preserve">
+    <value>Recargar</value>
+  </data>
+  <data name="CopyButton" xml:space="preserve">
+    <value>Copiar</value>
+  </data>
+  <data name="CopyButtonDone" xml:space="preserve">
+    <value>Copiado</value>
+  </data>
+  <data name="LineEndingMixed" xml:space="preserve">
+    <value>Mixto</value>
+  </data>
+  <data name="DialogClose" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="OpenErrorTitle" xml:space="preserve">
+    <value>No se puede abrir el archivo</value>
+  </data>
+  <data name="OpenErrorNotFound" xml:space="preserve">
+    <value>No se ha encontrado el archivo indicado.</value>
+  </data>
+  <data name="OpenErrorGeneric" xml:space="preserve">
+    <value>Se ha producido un error al leer el archivo.</value>
+  </data>
+  <data name="ViewerInitErrorTitle" xml:space="preserve">
+    <value>No se puede preparar el visor</value>
+  </data>
+  <data name="ViewerInitErrorMessage" xml:space="preserve">
+    <value>Se ha producido un error al preparar la vista del documento (WebView2).</value>
+  </data>
+  <data name="AboutTitle" xml:space="preserve">
+    <value>Acerca de esta aplicación</value>
+  </data>
+  <data name="AboutVersion" xml:space="preserve">
+    <value>{0}  versión {1}</value>
+  </data>
+  <data name="AboutDescription" xml:space="preserve">
+    <value>Un visor nativo de Markdown, solo de lectura, para Windows 11</value>
+  </data>
+  <data name="AboutLicense" xml:space="preserve">
+    <value>Este software se distribuye bajo la licencia MIT.</value>
+  </data>
+  <data name="AboutGitHubLink" xml:space="preserve">
+    <value>Abrir el repositorio de GitHub</value>
+  </data>
+  <data name="AboutOpenLogFolder" xml:space="preserve">
+    <value>Abrir la carpeta de registros</value>
+  </data>
+  <data name="AboutThirdPartyHeader" xml:space="preserve">
+    <value>Licencias de terceros</value>
+  </data>
+  <data name="AboutThirdPartyLoadError" xml:space="preserve">
+    <value>No se ha podido cargar la información sobre la licencia de terceros.</value>
+  </data>
+  <data name="AboutContributors" xml:space="preserve">
+    <value>Colaboradores</value>
+  </data>
+  <data name="AboutCreditTranslationEnKo" xml:space="preserve">
+    <value>Traducción al inglés y al coreano</value>
+  </data>
+</root>
