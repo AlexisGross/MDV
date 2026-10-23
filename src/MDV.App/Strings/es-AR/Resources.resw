@@ -160,7 +160,7 @@
     <value>Texto más chico</value>
   </data>
   <data name="MenuZoomReset.Text" xml:space="preserve">
-    <value>Reestablecer tamaño del texto</value>
+    <value>Restablecer tamaño del texto</value>
   </data>
   <data name="MenuReload.Text" xml:space="preserve">
     <value>Recargar</value>
@@ -175,7 +175,7 @@
     <value>Acerca de esta aplicación</value>
   </data>
   <data name="MenuLanguage.Text" xml:space="preserve">
-    <value>Lenguaje</value>
+    <value>Idioma</value>
   </data>
   <data name="MenuLanguageSystem" xml:space="preserve">
     <value>Usar la configuración del sistema</value>

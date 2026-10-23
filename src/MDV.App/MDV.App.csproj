@@ -102,9 +102,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MDV.Core\MDV.Core.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Strings\es-AR\" />
-  </ItemGroup>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
