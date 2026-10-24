@@ -8,6 +8,7 @@ the Windows display language, and falls back to English if there is no translati
 | Japanese (reference for keys) | [`src/MDV.App/Strings/ja-JP/Resources.resw`](../../src/MDV.App/Strings/ja-JP/Resources.resw) |
 | Korean | [`src/MDV.App/Strings/ko-KR/Resources.resw`](../../src/MDV.App/Strings/ko-KR/Resources.resw) |
 | English (default) | [`src/MDV.App/Strings/en-US/Resources.resw`](../../src/MDV.App/Strings/en-US/Resources.resw) |
+| Spanish | [`src/MDV.App/Strings/es-AR/Resources.resw`](../../src/MDV.App/Strings/es-AR/Resources.resw) |
 
 ## Adding a language
 
