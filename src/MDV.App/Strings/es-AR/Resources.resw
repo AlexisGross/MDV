@@ -181,7 +181,7 @@
     <value>Usar la configuración del sistema</value>
   </data>
   <data name="LanguageRestartTitle" xml:space="preserve">
-    <value>Cambiar lenguaje</value>
+    <value>Cambiar idioma</value>
   </data>
   <data name="LanguageRestartMessage" xml:space="preserve">
     <value>El cambio surtirá efecto una vez que se reinicie la aplicación.</value>
