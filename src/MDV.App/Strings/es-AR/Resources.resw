@@ -252,4 +252,7 @@
   <data name="AboutCreditTranslationEnKo" xml:space="preserve">
     <value>Traducción al inglés y al coreano</value>
   </data>
+  <data name="AboutCreditTranslationEs" xml:space="preserve">
+    <value>Traducción al español</value>
+  </data>
 </root>

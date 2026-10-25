@@ -146,6 +146,13 @@ Issue やプルリクエストを送る前に、MDV の方針と手順をまと�
 
 新しい言語の追加や翻訳の修正の手順は [docs/translations/README.md](docs/translations/README.md)（英語）を参照してください。コードやマニフェストを変更せずに言語を追加できます。
 
+## 協力者
+
+MDV の開発・翻訳に協力してくださった方々です。ありがとうございます。
+
+- [Coldlapse](https://github.com/Coldlapse) — 英語・韓国語翻訳、文字コード対応などの修正
+- [Alexis Gross](https://github.com/AlexisGross) — スペイン語翻訳
+
 ## ライセンス
 
 本ソフトウェアは [MIT License](https://github.com/kajiyajp/MDV/blob/main/LICENSE) の下で公開されています。

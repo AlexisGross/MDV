@@ -488,13 +488,23 @@ public sealed partial class MainWindow : Window
             CornerRadius = new CornerRadius(4)
         });
 
-        // コントリビューター（最下部に小さく表示）
-        var credit = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Thickness(0, 6, 0, 0), Opacity = 0.75 };
-        credit.Children.Add(new TextBlock { Text = Localizer.Get("AboutContributors") + ":", FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
-        var coldlapseLink = new HyperlinkButton { Content = "Coldlapse", FontSize = 12, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
-        coldlapseLink.Click += (s, e) => LaunchExternal("https://github.com/Coldlapse");
-        credit.Children.Add(coldlapseLink);
-        credit.Children.Add(new TextBlock { Text = "— " + Localizer.Get("AboutCreditTranslationEnKo"), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+        // コントリビューター（最下部に小さく表示）。名前・リンクは本人の了承を得たものだけを載せる
+        (string Name, string Url, string RoleKey)[] contributors =
+        [
+            ("Coldlapse", "https://github.com/Coldlapse", "AboutCreditTranslationEnKo"),
+            ("Alexis Gross", "https://github.com/AlexisGross", "AboutCreditTranslationEs"),
+        ];
+        var credit = new StackPanel { Spacing = 2, Margin = new Thickness(0, 6, 0, 0), Opacity = 0.75 };
+        credit.Children.Add(new TextBlock { Text = Localizer.Get("AboutContributors") + ":", FontSize = 12 });
+        foreach (var (name, url, roleKey) in contributors)
+        {
+            var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4, Margin = new Thickness(12, 0, 0, 0) };
+            var link = new HyperlinkButton { Content = name, FontSize = 12, Padding = new Thickness(0), VerticalAlignment = VerticalAlignment.Center };
+            link.Click += (s, e) => LaunchExternal(url);
+            row.Children.Add(link);
+            row.Children.Add(new TextBlock { Text = "— " + Localizer.Get(roleKey), FontSize = 12, VerticalAlignment = VerticalAlignment.Center });
+            credit.Children.Add(row);
+        }
         panel.Children.Add(credit);
 
         // ダイアログ全体を縦スクロール可能にし、画面が小さくても内容が溢れず
