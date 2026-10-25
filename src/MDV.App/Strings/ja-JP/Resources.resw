@@ -176,4 +176,7 @@
   <data name="AboutCreditTranslationEnKo" xml:space="preserve">
     <value>英語・韓国語翻訳</value>
   </data>
+  <data name="AboutCreditTranslationEs" xml:space="preserve">
+    <value>スペイン語翻訳</value>
+  </data>
 </root>

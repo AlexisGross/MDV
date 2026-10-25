@@ -162,4 +162,7 @@
   <data name="AboutCreditTranslationEnKo" xml:space="preserve">
     <value>English and Korean translation</value>
   </data>
+  <data name="AboutCreditTranslationEs" xml:space="preserve">
+    <value>Spanish translation</value>
+  </data>
 </root>

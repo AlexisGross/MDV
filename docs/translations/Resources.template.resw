@@ -213,4 +213,8 @@
     <value>English and Korean translation</value>
     <comment>About dialog: what the contributor "Coldlapse" did. | ja: 英語・韓国語翻訳</comment>
   </data>
+  <data name="AboutCreditTranslationEs" xml:space="preserve">
+    <value>Spanish translation</value>
+    <comment>About dialog: what the contributor "Alexis Gross" did. | ja: スペイン語翻訳</comment>
+  </data>
 </root>
